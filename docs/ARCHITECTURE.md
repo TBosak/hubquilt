@@ -619,27 +619,6 @@ export function formatDate(date: Date): string { /* ... */ }
 export class RequestQueue { /* ... */ }
 ```
 
-## Debugging
-
-### Debug Mode
-
-Enable verbose logging:
-
-1. Open DevTools
-2. Set localStorage flag:
-   ```javascript
-   localStorage.setItem('hubquilt-debug', 'true');
-   ```
-3. Reload page
-
-### Inspecting State
-
-```javascript
-// In browser console
-chrome.storage.sync.get(null, console.log);  // All settings
-chrome.storage.local.get(null, console.log); // All cache
-```
-
 ## Further Reading
 
 - [Contributing Guide](./CONTRIBUTING.md)
