@@ -1,10 +1,12 @@
 import JSZip from 'jszip';
+import type { GithubApiClient } from '../core/github-api-client';
 
 export interface GitZipOptions {
   owner: string;
   repo: string;
   ref: string;
   path: string;
+  githubApi: GithubApiClient;
   onProgress?: (status: string, message: string, percent: number) => void;
 }
 
@@ -27,39 +29,23 @@ interface TreeResponse {
  * Download a folder from a GitHub repository as a ZIP file
  */
 export async function downloadFolderAsZip(options: GitZipOptions): Promise<void> {
-  const { owner, repo, ref, path, onProgress } = options;
+  const { owner, repo, ref, path, githubApi, onProgress } = options;
 
   try {
     onProgress?.('prepare', 'Fetching folder contents...', 0);
 
     // Get the commit for this ref (works for branches, tags, and commit SHAs)
-    const commitUrl = `https://api.github.com/repos/${owner}/${repo}/commits/${ref}`;
-    const commitResponse = await fetch(commitUrl);
+    const commitData = await githubApi.getJson<{ commit: { tree: { sha: string } } }>(
+      `/repos/${owner}/${repo}/commits/${ref}`
+    );
 
-    if (commitResponse.status === 403 || commitResponse.status === 429) {
-      throw new Error('GitHub API rate limit reached. Please try again later or configure authentication.');
-    }
-
-    if (!commitResponse.ok) {
-      throw new Error(`Failed to fetch commit: ${commitResponse.statusText}`);
-    }
-
-    const commitData = await commitResponse.json();
     const treeSha = commitData.commit.tree.sha;
 
     // Get the full tree recursively
-    const treeUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${treeSha}?recursive=1`;
-    const treeResponse = await fetch(treeUrl);
-
-    if (treeResponse.status === 403 || treeResponse.status === 429) {
-      throw new Error('GitHub API rate limit reached. Please try again later or configure authentication.');
-    }
-
-    if (!treeResponse.ok) {
-      throw new Error(`Failed to fetch tree: ${treeResponse.statusText}`);
-    }
-
-    const treeData: TreeResponse = await treeResponse.json();
+    const treeData: TreeResponse = await githubApi.getJson<TreeResponse>(
+      `/repos/${owner}/${repo}/git/trees/${treeSha}`,
+      { recursive: '1' }
+    );
 
     if (treeData.truncated) {
       throw new Error('Repository tree is too large (truncated). Try downloading a smaller folder.');
@@ -89,15 +75,9 @@ export async function downloadFolderAsZip(options: GitZipOptions): Promise<void>
 
       try {
         // Get file content using blob API
-        const blobUrl = `https://api.github.com/repos/${owner}/${repo}/git/blobs/${file.sha}`;
-        const blobResponse = await fetch(blobUrl);
-
-        if (!blobResponse.ok) {
-          console.warn(`Failed to download ${file.path}, skipping...`);
-          continue;
-        }
-
-        const blobData = await blobResponse.json();
+        const blobData = await githubApi.getJson<{ content: string }>(
+          `/repos/${owner}/${repo}/git/blobs/${file.sha}`
+        );
 
         // Decode base64 content
         const content = atob(blobData.content);
@@ -148,39 +128,22 @@ export async function calculateFolderSize(
   owner: string,
   repo: string,
   ref: string,
-  path: string
+  path: string,
+  githubApi: GithubApiClient
 ): Promise<number> {
   try {
     // Get the commit for this ref (works for branches, tags, and commit SHAs)
-    const commitUrl = `https://api.github.com/repos/${owner}/${repo}/commits/${ref}`;
-    const commitResponse = await fetch(commitUrl);
+    const commitData = await githubApi.getJson<{ commit: { tree: { sha: string } } }>(
+      `/repos/${owner}/${repo}/commits/${ref}`
+    );
 
-    // Silently return 0 on rate limit instead of throwing
-    if (commitResponse.status === 403 || commitResponse.status === 429) {
-      return 0;
-    }
-
-    if (!commitResponse.ok) {
-      return 0;
-    }
-
-    const commitData = await commitResponse.json();
     const treeSha = commitData.commit.tree.sha;
 
     // Get the full tree recursively
-    const treeUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${treeSha}?recursive=1`;
-    const treeResponse = await fetch(treeUrl);
-
-    // Silently return 0 on rate limit
-    if (treeResponse.status === 403 || treeResponse.status === 429) {
-      return 0;
-    }
-
-    if (!treeResponse.ok) {
-      return 0;
-    }
-
-    const treeData: TreeResponse = await treeResponse.json();
+    const treeData: TreeResponse = await githubApi.getJson<TreeResponse>(
+      `/repos/${owner}/${repo}/git/trees/${treeSha}`,
+      { recursive: '1' }
+    );
 
     // Filter files within the target path
     const targetPath = path.endsWith('/') ? path : `${path}/`;

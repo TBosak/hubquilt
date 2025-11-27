@@ -1,9 +1,13 @@
-import type { Feature } from "../core/feature-types";
+import type { Feature, FeatureContext } from "../core/feature-types";
 import { observeAndProcess } from "../core/dom-observer";
 import { injectStyles } from "../core/dom-utils";
 import { downloadFolderAsZip, calculateFolderSize } from "../utils/gitzip";
+import type { GithubApiClient } from "../core/github-api-client";
 
 const processedElements = new WeakSet<Element>();
+
+// Store GitHub API client reference
+let githubApiClient: GithubApiClient | null = null;
 
 interface FileMetadata {
   size: number;
@@ -238,41 +242,35 @@ async function fetchTreeData(owner: string, repo: string, ref: string): Promise<
   // Create new fetch promise and store it
   const fetchPromise = queueRequest(async () => {
     try {
-      const commitUrl = `https://api.github.com/repos/${owner}/${repo}/commits/${ref}`;
-      const commitResponse = await fetch(commitUrl);
-
-      if (commitResponse.status === 403 || commitResponse.status === 429) {
-        setRateLimited();
+      if (!githubApiClient) {
+        console.error('[File Downloads] GitHub API client not initialized');
         return null;
       }
 
-      if (!commitResponse.ok) {
-        return null;
-      }
+      // Fetch commit to get tree SHA
+      const commitData = await githubApiClient.getJson<{ commit: { tree: { sha: string } } }>(
+        `/repos/${owner}/${repo}/commits/${ref}`
+      );
 
-      const commitData = await commitResponse.json();
       const treeSha = commitData.commit.tree.sha;
 
-      const treeUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${treeSha}?recursive=1`;
-      const treeResponse = await fetch(treeUrl);
+      // Fetch tree recursively
+      const treeData = await githubApiClient.getJson<{ tree: any[] }>(
+        `/repos/${owner}/${repo}/git/trees/${treeSha}`,
+        { recursive: '1' }
+      );
 
-      if (treeResponse.status === 403 || treeResponse.status === 429) {
-        setRateLimited();
-        return null;
-      }
-
-      if (!treeResponse.ok) {
-        return null;
-      }
-
-      const treeData = await treeResponse.json();
       const tree = treeData.tree;
 
       // Cache the tree data
       await setCachedTree(owner, repo, ref, tree);
 
       return tree;
-    } catch (error) {
+    } catch (error: any) {
+      // Check for rate limit or forbidden errors
+      if (error.message && (error.message.includes('403') || error.message.includes('429'))) {
+        setRateLimited();
+      }
       console.error('[File Downloads] Error fetching tree:', error);
       return null;
     } finally {
@@ -457,9 +455,9 @@ async function addDownloadInfo(element: Element, settings?: Record<string, any>)
       const cachedSize = await getCachedFolderSize(urlInfo.owner, urlInfo.repo, itemPath, ref, lastCommitTime);
       if (cachedSize !== null) {
         size = cachedSize;
-      } else if (settings?.showFileSize !== false) {
+      } else if (settings?.showFileSize !== false && githubApiClient) {
         // Calculate and cache folder size
-        size = await calculateFolderSize(urlInfo.owner, urlInfo.repo, ref, itemPath);
+        size = await calculateFolderSize(urlInfo.owner, urlInfo.repo, ref, itemPath, githubApiClient);
         if (size > 0) {
           await setCachedFolderSize(urlInfo.owner, urlInfo.repo, itemPath, ref, size, lastCommitTime);
         }
@@ -520,11 +518,16 @@ async function addDownloadInfo(element: Element, settings?: Record<string, any>)
         `;
 
         try {
+          if (!githubApiClient) {
+            throw new Error('GitHub API client not available');
+          }
+
           await downloadFolderAsZip({
             owner: urlInfo.owner,
             repo: urlInfo.repo,
             ref,
             path: itemPath,
+            githubApi: githubApiClient,
             onProgress: (status, message, percent) => {
               console.log(`[Folder Download] ${status}: ${message} (${percent}%)`);
               downloadBtn.title = `${message} (${percent}%)`;
@@ -620,6 +623,9 @@ export const fileDownloadsFeature: Feature = {
   ],
 
   async init(ctx, settings) {
+    // Store GitHub API client reference for use in API calls
+    githubApiClient = ctx.githubApi;
+
     // Add header column and fix colspan
     const addHeaderColumn = () => {
       // Find the actual header row with <th> elements
