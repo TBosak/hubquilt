@@ -12,6 +12,7 @@ let githubApiClient: GithubApiClient | null = null;
 interface FileMetadata {
   size: number;
   downloadUrl: string;
+  sha?: string;
 }
 
 interface CachedTreeData {
@@ -20,7 +21,10 @@ interface CachedTreeData {
   lastCommitTime?: string;
 }
 
-interface CachedFileMetadata extends FileMetadata {
+interface CachedFileMetadata {
+  size: number;
+  downloadUrl: string;
+  sha?: string;
   timestamp: number;
   lastCommitTime?: string;
 }
@@ -151,6 +155,12 @@ async function getCachedFileMetadata(owner: string, repo: string, path: string, 
     return null;
   }
 
+  // Invalidate cache if it doesn't have a SHA (old cache format)
+  if (!data.sha) {
+    console.log('[File Metadata] Cache entry missing SHA, invalidating:', path);
+    return null;
+  }
+
   // If we have lastCommitTime from DOM, check if cache is still valid
   if (lastCommitTime && data.lastCommitTime) {
     // Cache is invalid if file was committed after our cached version
@@ -166,7 +176,8 @@ async function getCachedFileMetadata(owner: string, repo: string, path: string, 
 
   return {
     size: data.size,
-    downloadUrl: data.downloadUrl
+    downloadUrl: data.downloadUrl,
+    sha: data.sha
   };
 }
 
@@ -247,12 +258,15 @@ async function fetchTreeData(owner: string, repo: string, ref: string): Promise<
         return null;
       }
 
+      console.log('[Tree Fetch] Fetching tree for:', { owner, repo, ref });
+
       // Fetch commit to get tree SHA
       const commitData = await githubApiClient.getJson<{ commit: { tree: { sha: string } } }>(
         `/repos/${owner}/${repo}/commits/${ref}`
       );
 
       const treeSha = commitData.commit.tree.sha;
+      console.log('[Tree Fetch] Got tree SHA:', treeSha);
 
       // Fetch tree recursively
       const treeData = await githubApiClient.getJson<{ tree: any[] }>(
@@ -261,6 +275,10 @@ async function fetchTreeData(owner: string, repo: string, ref: string): Promise<
       );
 
       const tree = treeData.tree;
+      console.log('[Tree Fetch] Tree fetched successfully:', {
+        itemCount: tree.length,
+        sampleItems: tree.slice(0, 3).map((item: any) => ({ path: item.path, type: item.type, sha: item.sha }))
+      });
 
       // Cache the tree data
       await setCachedTree(owner, repo, ref, tree);
@@ -296,22 +314,37 @@ function getLastCommitTime(element: Element): string | null {
 }
 
 async function getFileMetadata(owner: string, repo: string, path: string, ref: string, lastCommitTime?: string): Promise<FileMetadata | null> {
+  console.log('[File Metadata] Fetching metadata for:', { owner, repo, path, ref });
+
   // Check cache first with commit time validation
   const cached = await getCachedFileMetadata(owner, repo, path, ref, lastCommitTime);
   if (cached) {
+    console.log('[File Metadata] Using cached metadata:', { path, sha: cached.sha });
     return cached;
   }
 
   // Try to get from tree data (avoids individual API calls)
   const tree = await fetchTreeData(owner, repo, ref);
+  console.log('[File Metadata] Tree fetched:', { hasTree: !!tree, treeLength: tree?.length });
+
   if (tree) {
     const fileEntry = tree.find((entry: any) => entry.path === path && entry.type === 'blob');
+    console.log('[File Metadata] File entry found:', {
+      path,
+      found: !!fileEntry,
+      sha: fileEntry?.sha,
+      size: fileEntry?.size
+    });
+
     if (fileEntry) {
       const downloadUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${path}`;
       const metadata: FileMetadata = {
         size: fileEntry.size || 0,
-        downloadUrl
+        downloadUrl,
+        sha: fileEntry.sha
       };
+
+      console.log('[File Metadata] Created metadata:', metadata);
 
       // Cache it with commit time
       await setCachedFileMetadata(owner, repo, path, ref, metadata, lastCommitTime);
@@ -320,6 +353,7 @@ async function getFileMetadata(owner: string, repo: string, path: string, ref: s
     }
   }
 
+  console.warn('[File Metadata] No metadata found for:', path);
   return null;
 }
 
@@ -448,6 +482,7 @@ async function addDownloadInfo(element: Element, settings?: Record<string, any>)
   // Fetch metadata first (will use cache if available)
   let size = 0;
   let downloadUrl = '';
+  let fileSha = '';
 
   try {
     if (isDirectory) {
@@ -472,6 +507,7 @@ async function addDownloadInfo(element: Element, settings?: Record<string, any>)
 
       size = metadata.size;
       downloadUrl = metadata.downloadUrl;
+      fileSha = metadata.sha || '';
     }
   } catch (error) {
     console.error('[File Downloads] Error fetching metadata:', error);
@@ -496,6 +532,16 @@ async function addDownloadInfo(element: Element, settings?: Record<string, any>)
     const downloadBtn = document.createElement('button');
     downloadBtn.className = 'hq-download-btn';
     downloadBtn.title = isDirectory ? `Download ${filename} as ZIP` : `Download ${filename}`;
+
+    // Store metadata as data attributes for access in click handler
+    downloadBtn.setAttribute('data-is-directory', String(isDirectory));
+    downloadBtn.setAttribute('data-filename', filename);
+    downloadBtn.setAttribute('data-path', itemPath);
+    downloadBtn.setAttribute('data-ref', ref);
+    if (fileSha) {
+      downloadBtn.setAttribute('data-file-sha', fileSha);
+    }
+
     downloadBtn.innerHTML = `
       <svg class="octicon" viewBox="0 0 16 16" width="16" height="16">
         <path d="M7.47 10.78a.75.75 0 0 0 1.06 0l3.75-3.75a.75.75 0 0 0-1.06-1.06L8.75 8.44V1.75a.75.75 0 0 0-1.5 0v6.69L4.78 5.97a.75.75 0 0 0-1.06 1.06l3.75 3.75ZM3.75 13a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z"></path>
@@ -506,7 +552,21 @@ async function addDownloadInfo(element: Element, settings?: Record<string, any>)
       e.stopPropagation();
       e.preventDefault();
 
-      if (isDirectory) {
+      // Read metadata from data attributes
+      const btnIsDirectory = downloadBtn.getAttribute('data-is-directory') === 'true';
+      const btnFilename = downloadBtn.getAttribute('data-filename') || filename;
+      const btnPath = downloadBtn.getAttribute('data-path') || itemPath;
+      const btnRef = downloadBtn.getAttribute('data-ref') || ref;
+      const btnFileSha = downloadBtn.getAttribute('data-file-sha') || '';
+
+      console.log('[File Download] Download clicked:', {
+        isDirectory: btnIsDirectory,
+        filename: btnFilename,
+        sha: btnFileSha,
+        hasGithubApi: !!githubApiClient
+      });
+
+      if (btnIsDirectory) {
         // Download folder as ZIP
         downloadBtn.disabled = true;
         downloadBtn.innerHTML = `
@@ -525,8 +585,8 @@ async function addDownloadInfo(element: Element, settings?: Record<string, any>)
           await downloadFolderAsZip({
             owner: urlInfo.owner,
             repo: urlInfo.repo,
-            ref,
-            path: itemPath,
+            ref: btnRef,
+            path: btnPath,
             githubApi: githubApiClient,
             onProgress: (status, message, percent) => {
               console.log(`[Folder Download] ${status}: ${message} (${percent}%)`);
@@ -543,15 +603,55 @@ async function addDownloadInfo(element: Element, settings?: Record<string, any>)
               <path d="M7.47 10.78a.75.75 0 0 0 1.06 0l3.75-3.75a.75.75 0 0 0-1.06-1.06L8.75 8.44V1.75a.75.75 0 0 0-1.5 0v6.69L4.78 5.97a.75.75 0 0 0-1.06 1.06l3.75 3.75ZM3.75 13a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z"></path>
             </svg>
           `;
-          downloadBtn.title = `Download ${filename} as ZIP`;
+          downloadBtn.title = `Download ${btnFilename} as ZIP`;
         }
       } else {
-        // Download file directly
-        if (downloadUrl) {
+        // Download file directly using GitHub API
+        if (btnFileSha && githubApiClient) {
           try {
             downloadBtn.disabled = true;
 
-            // Fetch the file content
+            console.log('[File Download] Fetching via API with SHA:', btnFileSha);
+
+            // Fetch the file content using blob API (supports authentication)
+            const blobData = await githubApiClient.getJson<{ content: string; encoding: string }>(
+              `/repos/${urlInfo.owner}/${urlInfo.repo}/git/blobs/${btnFileSha}`
+            );
+
+            // Decode base64 content
+            const content = atob(blobData.content);
+
+            // Convert to blob
+            const bytes = new Uint8Array(content.length);
+            for (let i = 0; i < content.length; i++) {
+              bytes[i] = content.charCodeAt(i);
+            }
+            const blob = new Blob([bytes]);
+            const blobUrl = URL.createObjectURL(blob);
+
+            // Create download link
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = btnFilename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Clean up blob URL
+            URL.revokeObjectURL(blobUrl);
+            console.log('[File Download] File downloaded successfully via API');
+          } catch (error) {
+            console.error('[File Download] Error:', error);
+            alert(`Failed to download file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          } finally {
+            downloadBtn.disabled = false;
+          }
+        } else if (downloadUrl) {
+          // Fallback to raw URL for public repos if no sha available
+          console.warn('[File Download] No SHA available, falling back to raw URL (may fail for private repos)');
+          try {
+            downloadBtn.disabled = true;
+
             const response = await fetch(downloadUrl);
             if (!response.ok) {
               throw new Error('Failed to fetch file');
@@ -560,15 +660,13 @@ async function addDownloadInfo(element: Element, settings?: Record<string, any>)
             const blob = await response.blob();
             const blobUrl = URL.createObjectURL(blob);
 
-            // Create download link
             const link = document.createElement('a');
             link.href = blobUrl;
-            link.download = filename;
+            link.download = btnFilename;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
-            // Clean up blob URL
             URL.revokeObjectURL(blobUrl);
           } catch (error) {
             console.error('[File Download] Error:', error);
@@ -576,6 +674,8 @@ async function addDownloadInfo(element: Element, settings?: Record<string, any>)
           } finally {
             downloadBtn.disabled = false;
           }
+        } else {
+          console.error('[File Download] No download method available - no SHA and no URL');
         }
       }
     });
