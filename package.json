@@ -23,7 +23,7 @@
     "wxt"
   ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/chrome": "^0.1.31",
     "eslint": "^9.39.1",

@@ -1,16 +1,36 @@
-# HubQuilt - GitHub Enhancement Suite
+# HubQuilt
 
-A modular, configurable browser extension that adds enhancements to GitHub, built with [WXT](https://wxt.dev/).
+A modular, configurable browser extension that enhances GitHub's user interface with powerful productivity features.
 
-## Features
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-- **Modular Architecture**: Features are self-contained modules that can be toggled on/off
-- **Page Type Detection**: Automatically detects GitHub page types (repo, issue, PR, etc.)
-- **Optional GitHub PAT Support**: Advanced features can leverage GitHub API with optional personal access token
-- **Feature Toggle UI**: Easy-to-use options page to enable/disable features
-- **Sample Features Included**:
-  - Highlight repo name with a badge
-  - Display GitHub API rate limit indicator (requires PAT)
+## ✨ Features
+
+HubQuilt provides a collection of enhancements for GitHub:
+
+### 🎨 Visual Enhancements
+- **File Icons** - Professional file-type icons in file browsers and pull requests
+- **Code Colors** - Syntax highlighting improvements
+- **Collapse Markdown** - Collapsible markdown sections in comments
+- **Collapse in Comment** - Collapse code blocks in issue/PR comments
+
+### 📥 File Management
+- **File Downloads & Sizes** - Display file/folder sizes with one-click downloads
+  - Smart caching based on commit timestamps
+  - Download folders as ZIP files
+  - Minimal API usage (works efficiently even when rate-limited)
+
+### 🔧 Developer Tools
+- **API Rate Limit Indicator** - Monitor your GitHub API usage (requires PAT)
+- **Label Color Picker** - Enhanced label color selection
+- **Module Linker** - Quick navigation for code modules
+- **GIFs for Comments** - Easy GIF insertion in comments
+
+### 🏗️ Architecture
+- **Modular Design**: All features can be toggled independently
+- **Page Type Detection**: Features activate only on relevant GitHub pages
+- **Configurable Options**: Customize feature behavior through settings
+- **Performance Optimized**: Efficient DOM observation and caching strategies
 
 ## Development
 
@@ -100,40 +120,66 @@ Some features require a GitHub Personal Access Token (PAT) for enhanced function
 
 **Security Note**: The PAT is stored locally in your browser using `chrome.storage.local` and is never sent to external servers (only to GitHub API).
 
-## Adding New Features
+## 📚 Documentation
 
-Create a new file in `src/features/` that implements the `Feature` interface:
+Comprehensive documentation for contributors and developers:
 
-```typescript
-import type { Feature } from "../core/feature-types";
+- **[Contributing Guide](./docs/CONTRIBUTING.md)** - How to contribute to HubQuilt
+  - Development setup
+  - Creating new features
+  - Code style guidelines
+  - Testing procedures
+  - Pull request workflow
 
-export const myFeature: Feature = {
-  id: "my-feature",
-  name: "My Feature",
-  description: "Description of what it does",
-  tags: ["ui", "enhancement"],
-  pageTypes: ["repo", "issue"],
-  isEnabledByDefault: true,
+- **[Architecture](./docs/ARCHITECTURE.md)** - Technical deep dive
+  - System overview
+  - Feature system design
+  - DOM observation patterns
+  - Caching strategies
+  - API integration
+  - Security considerations
 
-  init(ctx) {
-    // Your feature implementation
-    const { document, pageType, repo, storage, githubApi } = ctx;
-    // ...
-  },
-};
+- **[Docs Index](./docs/README.md)** - Documentation directory
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how to get started:
+
+1. Read the [Contributing Guide](./docs/CONTRIBUTING.md)
+2. Check out [open issues](https://github.com/tbosak/hubquilt/issues)
+3. Fork the repository
+4. Create a feature branch
+5. Submit a pull request
+
+### Quick Start for Contributors
+
+```bash
+# Clone and setup
+git clone https://github.com/tbosak/hubquilt.git
+cd hubquilt
+npm install
+
+# Start development
+npm run dev
+
+# Build for production
+npm run build:chrome
 ```
 
-Then register it in `src/core/feature-registry.ts`:
+See [CONTRIBUTING.md](./docs/CONTRIBUTING.md) for detailed instructions.
 
-```typescript
-import { myFeature } from "../features/my-feature";
+## 🐛 Bug Reports & Feature Requests
 
-const ALL_FEATURES: Feature[] = [
-  // ... existing features
-  myFeature,
-];
-```
+- **Bug reports**: [Open an issue](https://github.com/tbosak/hubquilt/issues)
+- **Feature requests**: [Open an issue](https://github.com/tbosak/hubquilt/issues) with the enhancement label
+- **Questions**: [Start a discussion](https://github.com/tbosak/hubquilt/discussions)
 
-## License
+## 📄 License
 
-ISC
+MIT License - see [LICENSE](./LICENSE) for details
+
+## 🙏 Acknowledgments
+
+- Built with [WXT](https://wxt.dev/) - Next-gen web extension framework
+- UI components inspired by [GitHub Primer](https://primer.style/)
+- File icons from [file-icons-js](https://github.com/exuanbo/file-icons-js)
