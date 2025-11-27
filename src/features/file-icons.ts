@@ -132,14 +132,6 @@ async function replaceFileIcon(element: Element, settings?: Record<string, any>)
         customIcon.className = iconClass;
         customIcon.title = filename;
 
-        const iconSize = settings?.iconSize || 'medium';
-        const sizeMap: Record<string, string> = {
-          small: '14px',
-          medium: '16px',
-          large: '18px'
-        };
-        customIcon.style.fontSize = sizeMap[iconSize] || sizeMap.medium;
-
         const colorScheme = settings?.colorScheme || 'colored';
         if (colorScheme === 'monochrome') {
           customIcon.classList.add('file-icon-monochrome');
@@ -156,14 +148,6 @@ async function replaceFileIcon(element: Element, settings?: Record<string, any>)
     const customIcon = document.createElement('i');
     customIcon.className = iconClass;
     customIcon.title = filename;
-
-    const iconSize = settings?.iconSize || 'medium';
-    const sizeMap: Record<string, string> = {
-      small: '14px',
-      medium: '16px',
-      large: '18px'
-    };
-    customIcon.style.fontSize = sizeMap[iconSize] || sizeMap.medium;
 
     const colorScheme = settings?.colorScheme || 'colored';
     if (colorScheme === 'monochrome') {
@@ -226,18 +210,6 @@ export const fileIconsFeature: Feature = {
       options: [
         { value: "colored", label: "Colored" },
         { value: "monochrome", label: "Monochrome" }
-      ]
-    },
-    {
-      key: "iconSize",
-      label: "Icon Size",
-      description: "Set the size of file icons",
-      type: "select",
-      defaultValue: "medium",
-      options: [
-        { value: "small", label: "Small (14px)" },
-        { value: "medium", label: "Medium (16px)" },
-        { value: "large", label: "Large (18px)" }
       ]
     }
   ],
