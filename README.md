@@ -9,22 +9,53 @@ A modular, configurable browser extension that enhances GitHub's user interface 
 HubQuilt provides a collection of enhancements for GitHub:
 
 ### 🎨 Visual Enhancements
-- **File Icons** - Professional file-type icons in file browsers and pull requests
-- **Code Colors** - Syntax highlighting improvements
-- **Collapse Markdown** - Collapsible markdown sections in comments
-- **Collapse in Comment** - Collapse code blocks in issue/PR comments
+
+#### File Icons
+Professional file-type icons in file browsers and pull requests
+
+![File Icons](public/file-icons.png)
+
+#### Code Colors
+Syntax highlighting improvements
+
+![Code Colors](public/code-colors.png)
+
+#### Collapse Markdown
+Collapsible markdown sections in comments
+
+![Collapse Markdown](public/collapse-markdown.png)
+
+#### Collapse in Comment
+Collapse code blocks in issue/PR comments
+
+![Collapse in Comment](public/collapse-in-comment.png)
 
 ### 📥 File Management
-- **File Downloads & Sizes** - Display file/folder sizes with one-click downloads
-  - Smart caching based on commit timestamps
-  - Download folders as ZIP files
-  - Minimal API usage (works efficiently even when rate-limited)
+
+#### File Downloads & Sizes
+Display file/folder sizes with one-click downloads
+- Smart caching based on commit timestamps
+- Download folders as ZIP files
+- Minimal API usage (works efficiently even when rate-limited)
+
+![File Downloads & Sizes](public/file-downloads.png)
 
 ### 🔧 Developer Tools
-- **API Rate Limit Indicator** - Monitor your GitHub API usage (requires PAT)
-- **Label Color Picker** - Enhanced label color selection
-- **Module Linker** - Quick navigation for code modules
-- **GIFs for Comments** - Easy GIF insertion in comments
+
+#### Label Color Picker
+Enhanced label color selection
+
+![Label Color Picker](public/label-color-picker.png)
+
+#### Module Linker
+Quick navigation for code modules
+
+![Module Linker](public/module-linker.png)
+
+#### GIFs for Comments
+Easy GIF insertion in comments
+
+![GIFs for Comments](public/gifs-for-comments.png)
 
 ### 🏗️ Architecture
 - **Modular Design**: All features can be toggled independently
