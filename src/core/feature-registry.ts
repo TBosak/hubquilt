@@ -12,6 +12,7 @@ import { moduleLinkerFeature } from "../features/module-linker";
 import { gifsForCommentsFeature } from "../features/gifs-for-comments";
 import { fileIconsFeature } from "../features/file-icons";
 import { fileDownloadsFeature } from "../features/file-downloads";
+import { fontPreviewFeature } from "../features/font-preview";
 
 const ALL_FEATURES: Feature[] = [
   apiLimit,
@@ -23,6 +24,7 @@ const ALL_FEATURES: Feature[] = [
   gifsForCommentsFeature,
   fileIconsFeature,
   fileDownloadsFeature,
+  fontPreviewFeature,
 ];
 
 type FeatureSettings = {

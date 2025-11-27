@@ -328,9 +328,11 @@ async function getFileMetadata(owner: string, repo: string, path: string, ref: s
   console.log('[File Metadata] Tree fetched:', { hasTree: !!tree, treeLength: tree?.length });
 
   if (tree) {
-    const fileEntry = tree.find((entry: any) => entry.path === path && entry.type === 'blob');
+    // Decode path for comparison (GitHub URLs are encoded but tree paths are not)
+    const decodedPath = decodeURIComponent(path);
+    const fileEntry = tree.find((entry: any) => entry.path === decodedPath && entry.type === 'blob');
     console.log('[File Metadata] File entry found:', {
-      path,
+      path: decodedPath,
       found: !!fileEntry,
       sha: fileEntry?.sha,
       size: fileEntry?.size

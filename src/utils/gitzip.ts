@@ -52,7 +52,9 @@ export async function downloadFolderAsZip(options: GitZipOptions): Promise<void>
     }
 
     // Filter files within the target path
-    const targetPath = path.endsWith('/') ? path : `${path}/`;
+    // Decode path for comparison (GitHub URLs are encoded but tree paths are not)
+    const decodedPath = decodeURIComponent(path);
+    const targetPath = decodedPath.endsWith('/') ? decodedPath : `${decodedPath}/`;
     const files = treeData.tree.filter(
       item => item.type === 'blob' && item.path.startsWith(targetPath)
     );
@@ -146,7 +148,9 @@ export async function calculateFolderSize(
     );
 
     // Filter files within the target path
-    const targetPath = path.endsWith('/') ? path : `${path}/`;
+    // Decode path for comparison (GitHub URLs are encoded but tree paths are not)
+    const decodedPath = decodeURIComponent(path);
+    const targetPath = decodedPath.endsWith('/') ? decodedPath : `${decodedPath}/`;
     const files = treeData.tree.filter(
       item => item.type === 'blob' && item.path.startsWith(targetPath)
     );

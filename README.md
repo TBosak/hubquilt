@@ -30,6 +30,15 @@ Collapse code blocks in issue/PR comments
 
 ![Collapse in Comment](public/collapse-in-comment.png)
 
+#### Font Preview
+Live preview of font files with comprehensive character display
+- Supports .ttf, .woff, .woff2, .otf, and .eot formats
+- Works with both public and private repositories (PAT required for private)
+- Shows uppercase, lowercase, numbers, punctuation, and multiple font sizes
+- Authenticated API access using blob URLs
+
+![Font Preview](public/font-preview.png)
+
 ### 📥 File Management
 
 #### File Downloads & Sizes
