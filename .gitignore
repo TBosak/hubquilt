@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.output/
+dist/
+.wxt/
+
+# Environment files
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+bun.lock
+.claude/

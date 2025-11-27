@@ -1,0 +1,38 @@
+{
+  "name": "hubquilt",
+  "version": "0.0.1",
+  "description": "WXT-based browser extension that adds modular, toggleable enhancements to GitHub",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt dev",
+    "dev:firefox": "wxt dev --browser firefox",
+    "build": "wxt build",
+    "build:chrome": "wxt build --browser chrome",
+    "build:firefox": "wxt build --browser firefox",
+    "build:edge": "wxt build --browser edge",
+    "build:all": "wxt build --browser chrome && wxt build --browser firefox && wxt build --browser edge",
+    "zip": "wxt zip",
+    "zip:all": "wxt zip --browser chrome && wxt zip --browser firefox && wxt zip --browser edge",
+    "lint": "eslint src --ext .ts,.tsx",
+    "format": "prettier --write .",
+    "postinstall": "wxt prepare"
+  },
+  "keywords": [
+    "github",
+    "browser-extension",
+    "wxt"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chrome": "^0.1.31",
+    "eslint": "^9.39.1",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3",
+    "wxt": "^0.20.11"
+  },
+  "dependencies": {
+    "@exuanbo/file-icons-js": "^3.3.0",
+    "jszip": "^3.10.1"
+  }
+}
