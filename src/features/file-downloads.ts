@@ -6,6 +6,9 @@ import type { GithubApiClient } from "../core/github-api-client";
 
 const processedElements = new WeakSet<Element>();
 
+// Browser compatibility: Use browser or chrome API
+const storageApi = typeof browser !== "undefined" ? browser.storage : chrome.storage;
+
 // Store GitHub API client reference
 let githubApiClient: GithubApiClient | null = null;
 
@@ -127,7 +130,7 @@ function queueRequest<T>(fn: () => Promise<T>): Promise<T> {
 // Persistent cache helpers
 async function getCachedTree(owner: string, repo: string, ref: string): Promise<any[] | null> {
   const cacheKey = `${CACHE_PREFIX}tree:${owner}/${repo}/${ref}`;
-  const cached = await chrome.storage.local.get(cacheKey);
+  const cached = await storageApi.local.get(cacheKey);
   const data = cached[cacheKey] as CachedTreeData | undefined;
 
   if (data && Date.now() - data.timestamp < CACHE_DURATION) {
@@ -143,12 +146,12 @@ async function setCachedTree(owner: string, repo: string, ref: string, tree: any
     tree,
     timestamp: Date.now()
   };
-  await chrome.storage.local.set({ [cacheKey]: data });
+  await storageApi.local.set({ [cacheKey]: data });
 }
 
 async function getCachedFileMetadata(owner: string, repo: string, path: string, ref: string, lastCommitTime?: string): Promise<FileMetadata | null> {
   const cacheKey = `${CACHE_PREFIX}file:${owner}/${repo}/${ref}:${path}`;
-  const cached = await chrome.storage.local.get(cacheKey);
+  const cached = await storageApi.local.get(cacheKey);
   const data = cached[cacheKey] as CachedFileMetadata | undefined;
 
   if (!data) {
@@ -188,12 +191,12 @@ async function setCachedFileMetadata(owner: string, repo: string, path: string, 
     timestamp: Date.now(),
     lastCommitTime
   };
-  await chrome.storage.local.set({ [cacheKey]: data });
+  await storageApi.local.set({ [cacheKey]: data });
 }
 
 async function getCachedFolderSize(owner: string, repo: string, path: string, ref: string, lastCommitTime?: string): Promise<number | null> {
   const cacheKey = `${CACHE_PREFIX}folder:${owner}/${repo}/${ref}:${path}`;
-  const cached = await chrome.storage.local.get(cacheKey);
+  const cached = await storageApi.local.get(cacheKey);
   const data = cached[cacheKey] as CachedFolderMetadata | undefined;
 
   if (!data) {
@@ -223,7 +226,7 @@ async function setCachedFolderSize(owner: string, repo: string, path: string, re
     timestamp: Date.now(),
     lastCommitTime
   };
-  await chrome.storage.local.set({ [cacheKey]: data });
+  await storageApi.local.set({ [cacheKey]: data });
 }
 
 // Fetch tree data with caching

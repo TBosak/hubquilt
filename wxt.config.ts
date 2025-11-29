@@ -7,7 +7,11 @@ export default defineConfig({
     description: "Modular, configurable enhancements for GitHub.",
     version: "0.0.1",
     permissions: ["storage"],
-    host_permissions: ["https://github.com/*", "https://gist.github.com/*"],
+    host_permissions: [
+      "https://github.com/*",
+      "https://gist.github.com/*",
+      "https://api.github.com/*"
+    ],
     icons: {
       16: "logo.png",
       48: "logo.png",
@@ -18,7 +22,14 @@ export default defineConfig({
         resources: ["file-icons/css/*.css", "file-icons/fonts/*.woff2"],
         matches: ["https://github.com/*", "https://gist.github.com/*"]
       }
-    ]
+    ],
+    // Firefox-specific settings
+    browser_specific_settings: {
+      gecko: {
+        id: "timb63701@gmail.com",
+        strict_min_version: "109.0"
+      }
+    }
   },
   hooks: {
     "build:manifestGenerated": (wxt, manifest) => {

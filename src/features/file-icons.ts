@@ -5,6 +5,9 @@ import icons from "@exuanbo/file-icons-js";
 
 const processedElements = new WeakSet<Element>();
 
+// Browser compatibility: Use browser or chrome API
+const runtimeApi = typeof browser !== "undefined" ? browser.runtime : chrome.runtime;
+
 const fonts = [
   { name: 'file-icons', path: '/file-icons/fonts/file-icons.woff2' },
   { name: 'FontAwesome', path: '/file-icons/fonts/fontawesome.woff2' },
@@ -16,7 +19,7 @@ const fonts = [
 async function loadIconFonts() {
   const loadPromises = fonts.map(async (font) => {
     try {
-      const fontUrl = chrome.runtime.getURL(font.path);
+      const fontUrl = runtimeApi.getURL(font.path);
       const fontFace = new FontFace(
         font.name,
         `url("${fontUrl}") format("woff2")`,
@@ -32,7 +35,7 @@ async function loadIconFonts() {
 
   await Promise.all(loadPromises);
 
-  const cssUrl = chrome.runtime.getURL("/file-icons/css/file-icons.min.css");
+  const cssUrl = runtimeApi.getURL("/file-icons/css/file-icons.min.css");
   const link = document.createElement("link");
   link.id = "file-icons-css";
   link.rel = "stylesheet";

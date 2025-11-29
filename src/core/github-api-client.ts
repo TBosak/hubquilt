@@ -1,8 +1,11 @@
+// Browser compatibility: Use browser or chrome API
+const storageApi = typeof browser !== "undefined" ? browser.storage : chrome.storage;
+
 const PAT_STORAGE_KEY = "githubPat";
 
 async function getPat(): Promise<string | null> {
-  const raw = await chrome.storage.local.get(PAT_STORAGE_KEY);
-  return (raw[PAT_STORAGE_KEY] as string | undefined) ?? null;
+  const raw = await storageApi.local.get(PAT_STORAGE_KEY);
+  return (raw && raw[PAT_STORAGE_KEY] as string | undefined) ?? null;
 }
 
 export interface GithubApiClient {

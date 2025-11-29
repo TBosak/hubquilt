@@ -12,26 +12,47 @@ const THEME_STORAGE_KEY = "themePreference";
 
 type Theme = "light" | "dark" | "auto";
 
+// Browser compatibility: Use browser or chrome API
+const storageApi = typeof browser !== "undefined" ? browser.storage : chrome.storage;
+
 async function loadPat(): Promise<string | null> {
-  const raw = await chrome.storage.local.get(PAT_STORAGE_KEY);
-  return (raw[PAT_STORAGE_KEY] as string | undefined) ?? null;
+  try {
+    const raw = await storageApi.local.get(PAT_STORAGE_KEY);
+    return (raw && raw[PAT_STORAGE_KEY] as string | undefined) ?? null;
+  } catch (error) {
+    console.error("[Options] Error loading PAT:", error);
+    return null;
+  }
 }
 
 async function savePat(pat: string | null): Promise<void> {
-  if (pat && pat.trim().length > 0) {
-    await chrome.storage.local.set({ [PAT_STORAGE_KEY]: pat.trim() });
-  } else {
-    await chrome.storage.local.remove(PAT_STORAGE_KEY);
+  try {
+    if (pat && pat.trim().length > 0) {
+      await storageApi.local.set({ [PAT_STORAGE_KEY]: pat.trim() });
+    } else {
+      await storageApi.local.remove(PAT_STORAGE_KEY);
+    }
+  } catch (error) {
+    console.error("[Options] Error saving PAT:", error);
   }
 }
 
 async function loadTheme(): Promise<Theme> {
-  const raw = await chrome.storage.local.get(THEME_STORAGE_KEY);
-  return (raw[THEME_STORAGE_KEY] as Theme | undefined) ?? "auto";
+  try {
+    const raw = await storageApi.local.get(THEME_STORAGE_KEY);
+    return (raw && raw[THEME_STORAGE_KEY] as Theme | undefined) ?? "auto";
+  } catch (error) {
+    console.error("[Options] Error loading theme:", error);
+    return "auto";
+  }
 }
 
 async function saveTheme(theme: Theme): Promise<void> {
-  await chrome.storage.local.set({ [THEME_STORAGE_KEY]: theme });
+  try {
+    await storageApi.local.set({ [THEME_STORAGE_KEY]: theme });
+  } catch (error) {
+    console.error("[Options] Error saving theme:", error);
+  }
 }
 
 function applyTheme(theme: Theme) {

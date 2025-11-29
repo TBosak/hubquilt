@@ -14,6 +14,9 @@ import { fileIconsFeature } from "../features/file-icons";
 import { fileDownloadsFeature } from "../features/file-downloads";
 import { fontPreviewFeature } from "../features/font-preview";
 
+// Browser compatibility: Use browser or chrome API
+const storageApi = typeof browser !== "undefined" ? browser.storage : chrome.storage;
+
 const ALL_FEATURES: Feature[] = [
   apiLimit,
   codeColorsFeature,
@@ -39,21 +42,21 @@ const FEATURE_SETTINGS_KEY = "featureSettings";
 const FEATURE_OPTIONS_KEY = "featureOptions";
 
 async function getFeatureSettings(): Promise<FeatureSettings> {
-  const raw = await chrome.storage.sync.get(FEATURE_SETTINGS_KEY);
-  return (raw[FEATURE_SETTINGS_KEY] as FeatureSettings | undefined) ?? {};
+  const raw = await storageApi.sync.get(FEATURE_SETTINGS_KEY);
+  return (raw && raw[FEATURE_SETTINGS_KEY] as FeatureSettings | undefined) ?? {};
 }
 
 async function setFeatureSettings(settings: FeatureSettings): Promise<void> {
-  await chrome.storage.sync.set({ [FEATURE_SETTINGS_KEY]: settings });
+  await storageApi.sync.set({ [FEATURE_SETTINGS_KEY]: settings });
 }
 
 async function getFeatureOptions(): Promise<FeatureOptionsMap> {
-  const raw = await chrome.storage.sync.get(FEATURE_OPTIONS_KEY);
-  return (raw[FEATURE_OPTIONS_KEY] as FeatureOptionsMap | undefined) ?? {};
+  const raw = await storageApi.sync.get(FEATURE_OPTIONS_KEY);
+  return (raw && raw[FEATURE_OPTIONS_KEY] as FeatureOptionsMap | undefined) ?? {};
 }
 
 async function setFeatureOptions(options: FeatureOptionsMap): Promise<void> {
-  await chrome.storage.sync.set({ [FEATURE_OPTIONS_KEY]: options });
+  await storageApi.sync.set({ [FEATURE_OPTIONS_KEY]: options });
 }
 
 function createStorage(prefix: string) {
@@ -61,12 +64,12 @@ function createStorage(prefix: string) {
   return {
     async get<T>(key: string, fallback: T): Promise<T> {
       const fullKey = makeKey(key);
-      const raw = await chrome.storage.sync.get(fullKey);
-      return (raw[fullKey] as T | undefined) ?? fallback;
+      const raw = await storageApi.sync.get(fullKey);
+      return (raw && raw[fullKey] as T | undefined) ?? fallback;
     },
     async set<T>(key: string, value: T): Promise<void> {
       const fullKey = makeKey(key);
-      await chrome.storage.sync.set({ [fullKey]: value });
+      await storageApi.sync.set({ [fullKey]: value });
     },
   };
 }

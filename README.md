@@ -13,22 +13,22 @@ HubQuilt provides a collection of enhancements for GitHub:
 #### File Icons
 Professional file-type icons in file browsers and pull requests
 
-![File Icons](public/file-icons.png)
+![File Icons](docs/screenshots/file-icons.png)
 
 #### Code Colors
 Syntax highlighting improvements
 
-![Code Colors](public/code-colors.png)
+![Code Colors](docs/screenshots/code-colors.png)
 
 #### Collapse Markdown
 Collapsible markdown sections in comments
 
-![Collapse Markdown](public/collapse-markdown.png)
+![Collapse Markdown](docs/screenshots/collapse-markdown.png)
 
 #### Collapse in Comment
 Collapse code blocks in issue/PR comments
 
-![Collapse in Comment](public/collapse-in-comment.png)
+![Collapse in Comment](docs/screenshots/collapse-in-comment.png)
 
 #### Font Preview
 Live preview of font files with comprehensive character display
@@ -37,7 +37,7 @@ Live preview of font files with comprehensive character display
 - Shows uppercase, lowercase, numbers, punctuation, and multiple font sizes
 - Authenticated API access using blob URLs
 
-![Font Preview](public/font-preview.png)
+![Font Preview](docs/screenshots/font-preview.png)
 
 ### 📥 File Management
 
@@ -47,24 +47,24 @@ Display file/folder sizes with one-click downloads
 - Download folders as ZIP files
 - Minimal API usage (works efficiently even when rate-limited)
 
-![File Downloads & Sizes](public/file-downloads.png)
+![File Downloads & Sizes](docs/screenshots/file-downloads.png)
 
 ### 🔧 Developer Tools
 
 #### Label Color Picker
 Enhanced label color selection
 
-![Label Color Picker](public/label-color-picker.png)
+![Label Color Picker](docs/screenshots/label-color-picker.png)
 
 #### Module Linker
 Quick navigation for code modules
 
-![Module Linker](public/module-linker.png)
+![Module Linker](docs/screenshots/module-linker.png)
 
 #### GIFs for Comments
 Easy GIF insertion in comments
 
-![GIFs for Comments](public/gifs-for-comments.png)
+![GIFs for Comments](docs/screenshots/gifs-for-comments.png)
 
 ### 🏗️ Architecture
 - **Modular Design**: All features can be toggled independently
